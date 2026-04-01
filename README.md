@@ -9,6 +9,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 **Research Questions:**
 - How did the spatial distribution and severity of motor-vehicle collisions in Seattle change from pre-2020 to post-2020?
 - Are high-density collision areas more likely to experience severe outcomes (injuries, serious injuries, fatalities)?
+- Which geographical areas should SDOT prioritize to ensure that traffic deaths and serious injuries are most effectively reduced by 2030?
 
 ## Tech Stack
 
@@ -19,6 +20,16 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 | EDA & Visualization | Pandas, GeoPandas, Matplotlib, Seaborn |
 | Spatial Analysis | GeoPandas, SciPy (KDE), Folium |
 
+## Datasets
+
+- `SDOT_Collision_All_Years.geojson` — all collision records (raw); cleaned output: `Collision_All_Filtered.geojson`
+- `SDOT_Vehicle.csv` — vehicle-level collision records (raw); cleaned output: `Vehicle_Filtered.csv`
+
+## Cleaning Data
+| File | Description |
+| --- | --- |
+| `clean.py` | Converts date column into datetime, add temporal features (`YEAR`, `MONTH`, `DAY`, `SEASON`), drop columns with high NaN values, feature engineer severity score (`SEVERITY`) and total pedestrians per collision (`TOTAL_PED`) |
+
 ## Notebooks
 
 | Notebook | Description |
@@ -27,10 +38,27 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 | `geo.ipynb` | Spatial analysis: interactive heatmap, point maps by severity metric, KDE density estimation, severity index, and downtown vs. outer area comparisons |
 | `model.ipynb` | Modeling: creating categorical predictors (risk label), modeling decision tree (5-fold CV), and plotting each lat/lon bin classification |
 
-## Datasets
+## Notebook Information
 
-- `SDOT_Collision_All_Years.geojson` — all collision records (raw); cleaned output: `Collision_All_Filtered.geojson`
-- `SDOT_Vehicle.csv` — vehicle-level collision records (raw); cleaned output: `Vehicle_Filtered.csv`
+### `eda.ipynb`
+
+- Temporal trends: Collision counts by year (2004–2025), day of week, and season, revealing the COVID-era dip in 2020 and a decrease in collisions post-2020 relative to pre-2020 trends.
+- Categorical breakdowns: Distribution of collisions across junction type, severity description, top 10 collision type, weather condition, road condition, and light condition, identifying conditions that are most frequently associated with collisions.
+- Vehicle type analysis: Pie chart and year-over-year grouped bar chart (2019–2025) showing how the mix of vehicle types involved in collisions has shifted, including the 2025 increase in truck/SUV involvement relative to passenger vehicles.
+
+### `geo.ipynb`
+- Interactive heatmap: A Folium-based heatmap weighted by vehicle count (VEHCOUNT) across all collisions from 2015 onward, providing an interactive map view of collision hotspots.
+- Point maps by severity: Static GeoPandas scatter plots of all collision locations, colored by severity description and injury count, revealing the spatial distribution of outcome severity across the city.
+- Severity index & KDE density estimation: A composite severity score (`SEVERITY`) is computed per collision. Gaussian KDE is then applied separately to pre-2020 and post-2020 records, and two collision severity maps (an all collisions map and a filtered severe collisions map) and a density difference map (post-2020 − pre-2020) is plotted.
+- Downtown vs. outer Seattle comparison: Coordinate masking that isolates downtown collisions. Mean severity and collision counts are compared year-over-year between downtown and outer areas using side-by-side line plots, confirming downtown as a persistent hotspot for both density and severity.
+- The processed GeoDataFrame with the engineered severity column is exported to data/processed/Collision_Processed.geojson for use in downstream modeling.
+
+### `model.ipynb`
+- Grid aggregation: Collisions are grouped into 150×150 lat/lon bins. Each bin is summarized by collision count, mean severity, total injuries, serious injuries, fatalities, average vehicle count, and average pedestrian count, forming the feature set for modeling.
+- Risk predictor engineering: A composite risk score is computed per grid cell by standardizing collision count and mean severity, then combining them with a weighted sum (65% density, 35% severity). Scores are then quartile-binned into four categories: Very Low Risk, Low Risk, Medium Risk, High Risk, and Very High Risk.
+- Decision tree classifier: A DecisionTreeClassifier is trained on an 80/20 stratified train/test split. 5-fold stratified cross-validation is run on the training set to evaluate generalization before final fitting.
+- Evaluation: Test set performance is reported by accuracy score, a full classification report (precision, recall, F1 per risk class), a feature importance bar chart, and a confusion matrix. This surfaces which risk tiers are hardest to distinguish and which features drive classification most.
+- Spatial visualization: Grid cell centroids are recovered by parsing the interval bin labels, and each bin is plotted as a point on a map colored by predicted risk label, providing a spatial view of the model's zone-level risk classifications across Seattle.
 
 ## Abstract Findings
 
@@ -39,15 +67,22 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - Most collisions occur under clear weather and dry road conditions, but other adverse conditions (e.g., wet conditions) still play a factor.
 - Intersection and mid-block junction types account for a large proportion of collisions.
 - Passenger vehicles represent the majority of collision counts across most years; however, 2025 showed trucks/SUVs having higher collision counts compared to passenger vehicles.
-- Downtown Seattle remains a spatial hotspot for both collision density and severity.
+- Downtown Seattle had a negative density and severity change from pre-2020 to post-2020; however, outer areas such as southern Seattle had a positive density and severity change. Downtown Seattle remains a spatial hotspot for both collision density and severity.
 
 ## Next Steps
-- Enhancing visualizations
-- Writing 2-3 sentence description for visualizations
 - Finalizing decision tree modeling
-- Create and deploy dashboard application
+- Concluding
+- (Uncertain) Creating interactive dashboard and deploy
+
+## Learning Outcomes
+- Working with government sourced data (often uncleaned)
+- Experimenting with geospatial tools, such as Geopandas and Folium
 
 ## Credits & Sources
 - Seattle Open Data Portal - https://data.seattle.gov
 - COGS 108 (UC San Diego) Repository - https://github.com/cogs108
 - Claude by Anthropic
+
+## Author
+**Trenton Pham**
+Data Science @ UC San Diego
