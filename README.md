@@ -85,5 +85,5 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - Claude by Anthropic
 
 ## Author
-**Trenton Pham**
+**Trenton Pham** <br>
 Data Science @ UC San Diego
