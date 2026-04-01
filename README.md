@@ -28,7 +28,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 ## Cleaning Data
 | File | Description |
 | --- | --- |
-| `clean.py` | Converts date column into datetime, add temporal features (`YEAR`, `MONTH`, `DAY`, `SEASON`), drop columns with high NaN values, and total pedestrians per collision (`TOTAL_PED`) |
+| `clean.py` | Converts date column into datetime, add temporal features (`YEAR`, `MONTH`, `DAY`, `HOUR`, `Season`) and drop columns with high NaN values |
 
 ## Notebooks
 
