@@ -5,8 +5,13 @@ import datetime as dt
 def All_Years_Clean():
     gdf = gpd.read_file('data/raw/SDOT_Collision_All_Years.geojson')
 
-    gdf['INCDATE'] = pd.to_datetime(gdf['INCDATE'])
+    gdf['INCDATE'] = pd.to_datetime(gdf['INCDATE'], errors='coerce')
     gdf['YEAR'] = gdf['INCDATE'].dt.year
+    gdf['MONTH'] = gdf['INCDATE'].dt.month
+    gdf['DAY'] = gdf['INCDATE'].dt.day
+
+    gdf['INCDTTM'] = pd.to_datetime(gdf['INCDTTM'], errors='coerce')
+    gdf['HOUR'] = gdf['INCDTTM'].dt.hour
     gdf = gdf[(gdf["YEAR"] >= 2004) & (gdf['YEAR'] <= 2025)]
 
     cols_to_drop = [

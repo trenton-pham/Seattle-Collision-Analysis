@@ -28,7 +28,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 ## Cleaning Data
 | File | Description |
 | --- | --- |
-| `clean.py` | Converts date column into datetime, add temporal features (`YEAR`, `MONTH`, `DAY`, `SEASON`), drop columns with high NaN values, feature engineer severity score (`SEVERITY`) and total pedestrians per collision (`TOTAL_PED`) |
+| `clean.py` | Converts date column into datetime, add temporal features (`YEAR`, `MONTH`, `DAY`, `SEASON`), drop columns with high NaN values, and total pedestrians per collision (`TOTAL_PED`) |
 
 ## Notebooks
 
@@ -41,7 +41,6 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 ## Notebook Information
 
 ### `eda.ipynb`
-
 - Temporal trends: Collision counts by year (2004–2025), day of week, and season, revealing the COVID-era dip in 2020 and a decrease in collisions post-2020 relative to pre-2020 trends.
 - Categorical breakdowns: Distribution of collisions across junction type, severity description, top 10 collision type, weather condition, road condition, and light condition, identifying conditions that are most frequently associated with collisions.
 - Vehicle type analysis: Pie chart and year-over-year grouped bar chart (2019–2025) showing how the mix of vehicle types involved in collisions has shifted, including the 2025 increase in truck/SUV involvement relative to passenger vehicles.
@@ -55,7 +54,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 
 ### `model.ipynb`
 - Grid aggregation: Collisions are grouped into 150×150 lat/lon bins. Each bin is summarized by collision count, mean severity, total injuries, serious injuries, fatalities, average vehicle count, and average pedestrian count, forming the feature set for modeling.
-- Risk predictor engineering: A composite risk score is computed per grid cell by standardizing collision count and mean severity, then combining them with a weighted sum (65% density, 35% severity). Scores are then quartile-binned into four categories: Very Low Risk, Low Risk, Medium Risk, High Risk, and Very High Risk.
+- Risk predictor engineering: A composite risk score is computed per grid cell by standardizing collision count and mean severity, then combining them with a weighted sum (60% density, 40% severity). Scores are then quartile-binned into four categories: Very Low Risk, Low Risk, Medium Risk, High Risk, and Very High Risk.
 - Decision tree classifier: A DecisionTreeClassifier is trained on an 80/20 stratified train/test split. 5-fold stratified cross-validation is run on the training set to evaluate generalization before final fitting.
 - Evaluation: Test set performance is reported by accuracy score, a full classification report (precision, recall, F1 per risk class), a feature importance bar chart, and a confusion matrix. This surfaces which risk tiers are hardest to distinguish and which features drive classification most.
 - Spatial visualization: Grid cell centroids are recovered by parsing the interval bin labels, and each bin is plotted as a point on a map colored by predicted risk label, providing a spatial view of the model's zone-level risk classifications across Seattle.
@@ -75,8 +74,10 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - (Uncertain) Creating interactive dashboard and deploy
 
 ## Learning Outcomes
-- Working with government sourced data (often uncleaned)
-- Experimenting with geospatial tools, such as Geopandas and Folium
+- Working with government-sourced data and handling missing values and formatting issues, along with feature engineering on raw records.
+- Applying geospatial tools, such as Geopandas and Folium for spatial data manipulation and visualizations.
+- Performing kernel density estimation (KDE) with SciPy to model spatial distributions and difference/comparison maps.
+- Building a supervised classification model to predict collision risk levels per zone.
 
 ## Credits & Sources
 - Seattle Open Data Portal - https://data.seattle.gov
