@@ -7,7 +7,7 @@ For nearly a century, motor collisions have posed a significant public health ch
 This analysis investigates Seattle collision data from 2015 through 2025, focusing on how SDOT's Vision Zero initiative has impacted collision frequency, severity, and spatial patterns.
 
 **Research Questions:**
-- How did the spatial distribution and severity of motor-vehicle collisions in Seattle change from pre-2020 to post-2020?
+- How did the spatial distribution and severity of motor-vehicle collisions in Seattle change from pre-2020 to 2020 and onwards?
 - Are high-density collision areas more likely to experience severe outcomes (injuries, serious injuries, fatalities)?
 - Which geographical areas should SDOT prioritize to ensure that traffic deaths and serious injuries are most effectively reduced by 2030?
 
@@ -41,14 +41,14 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 ## Notebook Information
 
 ### `eda.ipynb`
-- Temporal trends: Collision counts by year (2004–2025), day of week, and season, revealing the COVID-era dip in 2020 and a decrease in collisions post-2020 relative to pre-2020 trends.
+- Temporal trends: Collision counts by year (2004–2025), day of week, and season, revealing the COVID-era dip in 2020 and a decrease in collisions 2020 onwards relative to pre-2020 trends.
 - Categorical breakdowns: Distribution of collisions across junction type, severity description, top 10 collision type, weather condition, road condition, and light condition, identifying conditions that are most frequently associated with collisions.
 - Vehicle type analysis: Pie chart and year-over-year grouped bar chart (2019–2025) showing how the mix of vehicle types involved in collisions has shifted, including the 2025 increase in truck/SUV involvement relative to passenger vehicles.
 
 ### `geo.ipynb`
 - Interactive heatmap: A Folium-based heatmap weighted by vehicle count (VEHCOUNT) across all collisions from 2015 onward, providing an interactive map view of collision hotspots.
 - Point maps by severity: Static GeoPandas scatter plots of all collision locations, colored by severity description and injury count, revealing the spatial distribution of outcome severity across the city.
-- Severity index & KDE density estimation: A composite severity score (`SEVERITY`) is computed per collision. Gaussian KDE is then applied separately to pre-2020 and post-2020 records, and two collision severity maps (an all collisions map and a filtered severe collisions map) and a density difference map (post-2020 − pre-2020) is plotted.
+- Severity index & KDE density estimation: A composite severity score (`SEVERITY`) is computed per collision. Gaussian KDE is then applied separately to pre-2020 and 2020 onward records, and two collision severity maps (an all collisions map and a filtered severe collisions map) and a density difference map (post-2020 − pre-2020) is plotted.
 - Downtown vs. outer Seattle comparison: Coordinate masking that isolates downtown collisions. Mean severity and collision counts are compared year-over-year between downtown and outer areas using side-by-side line plots, confirming downtown as a persistent hotspot for both density and severity.
 - The processed GeoDataFrame with the engineered severity column is exported to data/processed/Collision_Processed.geojson for use in downstream modeling.
 
@@ -59,14 +59,15 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - Evaluation: Test set performance is reported by accuracy score, a full classification report (precision, recall, F1 per risk class), a feature importance bar chart, and a confusion matrix. This surfaces which risk tiers are hardest to distinguish and which features drive classification most.
 - Spatial visualization: Grid cell centroids are recovered by parsing the interval bin labels, and each bin is plotted as a point on a map colored by predicted risk label, providing a spatial view of the model's zone-level risk classifications across Seattle.
 
-## Abstract Findings
+## Findings
 
-- Collision frequency peaked in pre-2020 years, with a dip during 2020 due to COVID. Trends are still noticeably less post-2020 compared to pre-2020.
-- Winter and rainfall conditions are likely contributing factors to collision count.
-- Most collisions occur under clear weather and dry road conditions, but other adverse conditions (e.g., wet conditions) still play a factor.
-- Intersection and mid-block junction types account for a large proportion of collisions.
-- Passenger vehicles represent the majority of collision counts across most years; however, 2025 showed trucks/SUVs having higher collision counts compared to passenger vehicles.
-- Downtown Seattle had a negative density and severity change from pre-2020 to post-2020; however, outer areas such as southern Seattle had a positive density and severity change. Downtown Seattle remains a spatial hotspot for both collision density and severity.
+- Collision frequency are noticeably less 2020 onwards compared to pre-2020.
+- Intersection-related collisions account for a large proportion of collisions.
+- Collision density had a spatial shift from downtown Seattle to outer areas, specifically southern Seattle, from pre-2020 to 2020 and onwards. This means that although downtown Seattle remains a hotspot in terms of collision severity and frequency, the 2020 and onward distribution suggests a redistribution of collision density into outer areas.
+
+## Current Caveats
+- The year 2020 and potentially 2021 resulted in a disruption of collision trends due to the COVID-19 pandemic. When future studies are conducted, it is best to exclude these years.
+- Although the raw dataset `SDOT_Collision_All_Years.geojson` was updated and retrieved in March 2026, the collision count for the month of December 2025 is mildly lower relative to the collision trends in previous years. This indicates that all collision data have yet to be uploaded.
 
 ## Next Steps
 - Finalizing decision tree modeling
