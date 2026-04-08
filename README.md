@@ -67,7 +67,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 
 ## Current Caveats
 - The year 2020 and potentially 2021 resulted in a disruption of collision trends due to the COVID-19 pandemic. When future studies are conducted, it is best to exclude these years.
-- Although the raw dataset `SDOT_Collision_All_Years.geojson` was updated and retrieved in March 2026, the collision count for the month of December 2025 is mildly lower relative to the collision trends in previous years. This indicates that all collision data have yet to be uploaded.
+- Although the raw dataset `SDOT_Collision_All_Years.geojson` was updated and retrieved in March 2026, the collision count for the month of December 2025 is mildly lower relative to the collision trends in previous years. This may indicate that all collision data have yet to be uploaded.
 
 ## Next Steps
 - Finalizing decision tree modeling
