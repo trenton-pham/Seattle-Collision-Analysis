@@ -1,5 +1,9 @@
 # Data
 data/
 
+# Tableau prep
+TABLEAU_GUIDE.md
+tableau_prep.py
+
 # macOS
 .DS_Store
