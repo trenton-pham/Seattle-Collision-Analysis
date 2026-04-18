@@ -19,6 +19,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 | Cleaning & Feature Engineering | Python, Pandas, GeoPandas |
 | EDA & Visualization | Pandas, GeoPandas, Matplotlib, Seaborn |
 | Spatial Analysis | GeoPandas, SciPy (KDE), Folium |
+| Modeling | Pandas, GeoPandas, NumPy, Scikit-learn |
 
 ## Datasets
 
@@ -54,7 +55,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 ### `model.ipynb`
 - Grid aggregation: Collisions are grouped into 150×150 lat/lon bins. Each bin is summarized by collision count, mean severity, total injuries, serious injuries, fatalities, average vehicle count, and average pedestrian count, forming the feature set for modeling.
 - Risk predictor engineering: A composite risk score is computed per grid cell by standardizing collision count and mean severity, then combining them with a weighted sum (60% density, 40% severity). Scores are then quartile-binned into four categories: Very Low Risk, Low Risk, Medium Risk, High Risk, and Very High Risk.
-- Decision tree classifier: A decision tree tree is trained on a feature set that describes zone context: spatial positions (`cell_lat`, `cell_lon`), temporal ratios (`peak_hour`, `night_ratio`, `weekend_ratio`, `winter_ratio`, `summer_ratio`), collision mix (`ped_involvement_ratio`, `cyclist_involvement_ratio`), and road structure (`intersection_ratio`, parsed from the `LOCATION` string).
+- Decision tree classifier: A decision tree tree is trained on a feature set that describes zone context: spatial cells (`cell_lat`, `cell_lon`), temporal ratios (`peak_hour`, `night_ratio`, `weekend_ratio`, `winter_ratio`, `summer_ratio`), collision mix (`ped_involvement_ratio`, `cyclist_involvement_ratio`), and road structure (`intersection_ratio`, parsed from the `LOCATION` string).
 - Evaluation: Test set performance is reported by accuracy score, a full classification report (precision, recall, F1 per risk class), a feature importance bar chart, and a confusion matrix. This surfaces which risk tiers are hardest to distinguish and which features drive classification most.
 - Spatial visualization: Grid cell centroids are recovered by parsing the interval bin labels, and each bin is plotted as a point on a map colored by predicted risk label, providing a spatial view of the model's zone-level risk classifications across Seattle.
 
@@ -69,7 +70,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - The decision tree classifies grid cells into three risk tiers with **68.4% 5-fold CV accuracy** and **66.6% test accuracy**.
 - Class-level performance is asymmetric: **Low Risk** zones are identified most reliably (F1 = 0.74), while **High Risk** zones show **high precision (0.84) but low recall (0.51)**. When the model flags a zone as high-risk it is usually correct, but it misses roughly half of the true high-risk zones, which default into the Medium tier.
 - **Medium Risk** acts as the model's uncertainty bucket (precision 0.54, recall 0.72) — Cells whose context features sit in the middle of the distribution get pushed there, inflating recall at the cost of precision.
-- Pedestrian involvement (`ped_involvement_ratio`) and seasonal distribution (`summer_ratio`, `winter_ratio`) carry most of the predictive weight compared to location cells (`cell_lon`, `cell_lat`). This suggests that what kind of activity a zone sees (pedestrian-heavy or seasonally skewed) is a stronger risk signal than where the zone sits geographically, meaning risk patterns generalize across Seattle rather than being confined to specific hotspots.
+- Pedestrian involvement (`ped_involvement_ratio`) and seasonal distribution (`summer_ratio`, `winter_ratio`) carry most of the predictive weight compared to spatial cells (`cell_lon`, `cell_lat`). This suggests that what kind of activity a zone sees (pedestrian-heavy or seasonally skewed) is a stronger risk signal than where the zone sits geographically, meaning risk patterns generalize across Seattle rather than being confined to specific hotspots.
 
 ## Current Caveats
 - The year 2020 and potentially 2021 resulted in a disruption of collision trends due to the COVID-19 pandemic. When future studies are conducted, it is best to exclude these years.
