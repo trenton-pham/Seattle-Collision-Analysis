@@ -1,12 +1,14 @@
 ### Vision Zero Collision Dashboard
 ### Courtesy of Claude Code, adopted by trentonpham
 
+import folium
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
-from matplotlib.colors import LogNorm
+from folium.plugins import FastMarkerCluster
 from scipy.stats import gaussian_kde
+from streamlit_folium import st_folium
 
 st.set_page_config(
     page_title="Seattle Collision Dashboard",
@@ -15,14 +17,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-DATA_PATH = "data/processed/Collision_Processed.geojson"
-NEIGHBORHOODS_PATH = "data/raw/Neighborhood_Map_Atlas_Neighborhoods.geojson"
+DATA_PATH = "data/processed/Collision_Processed.parquet"
 DOWNTOWN_BBOX = {"y_min": 47.595, "y_max": 47.620, "x_min": -122.345, "x_max": -122.320}
-HEATMAP_GRID_N = 100
 
 DARK_BG = "#0E1117"
 PANEL_BG = "#161B22"
-GRID_COLOR = "#30363D"
+GRID_COLOR = "#30363D"  
 TEXT_COLOR = "#E6EDF3"
 ACCENT = "#3B82F6"
 ACCENT_WARM = "#F97316"
@@ -52,17 +52,9 @@ st.markdown(
 )
 
 
-@st.cache_data(show_spinner="Loading neighborhoods…")
-def load_neighborhoods():
-    nbh = gpd.read_file(NEIGHBORHOODS_PATH)
-    if nbh.crs is None or nbh.crs.to_epsg() != 4326:
-        nbh = nbh.to_crs(epsg=4326)
-    return nbh
-
-
 @st.cache_data(show_spinner="Loading collision data…")
 def load_collisions():
-    gdf = gpd.read_file(DATA_PATH)
+    gdf = gpd.read_parquet(DATA_PATH)
     if "SEVERITY" not in gdf.columns:
         gdf["SEVERITY"] = (
             gdf["INJURIES"].fillna(0)
@@ -91,6 +83,28 @@ def kde_pre_post(coords_pre, coords_post, grid_points, shape):
     return z_post - z_pre
 
 
+@st.cache_data(show_spinner="Computing KDE…")
+def kde_filtered(_coords, _grid_points, shape, year_range, min_sev, severe_only):
+    return gaussian_kde(_coords)(_grid_points).reshape(shape)
+
+
+@st.cache_data(show_spinner="Building collision markers…")
+def build_marker_payload(_df, year_range, min_sev, severe_only):
+    return _df[["Y", "X"]].to_numpy().tolist()
+
+
+def make_collision_map(payload, center_lat, center_lon):
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=12,
+        min_zoom=11,
+        tiles="CartoDB dark_matter",
+        control_scale=True,
+    )
+    FastMarkerCluster(data=payload, name="Collisions").add_to(m)
+    return m
+
+
 def style_axes(ax, title=None):
     ax.set_facecolor(PANEL_BG)
     for spine in ax.spines.values():
@@ -110,8 +124,6 @@ def themed_fig(figsize):
 
 
 gdf = load_collisions()
-neighborhoods = load_neighborhoods()
-nb_minx, nb_miny, nb_maxx, nb_maxy = neighborhoods.total_bounds
 xx, yy, grid_points = make_grid(gdf["X"].min(), gdf["X"].max(), gdf["Y"].min(), gdf["Y"].max())
 
 with st.sidebar:
@@ -153,53 +165,33 @@ row1_left, row1_right = st.columns([3, 2], gap="small")
 
 with row1_left:
     with st.container(border=True):
-        st.markdown("##### Collision heatmap")
-        st.caption(f"{HEATMAP_GRID_N}×{HEATMAP_GRID_N} grid, weighted by VEHCOUNT (log scale).")
+        st.markdown("##### Collision map")
+        st.caption("Cluster markers; click clusters to drill down.")
 
-        weights = df_f["VEHCOUNT"].fillna(1).to_numpy()
-        xedges = np.linspace(nb_minx, nb_maxx, HEATMAP_GRID_N + 1)
-        yedges = np.linspace(nb_miny, nb_maxy, HEATMAP_GRID_N + 1)
-        H, _, _ = np.histogram2d(
-            df_f["X"].to_numpy(),
-            df_f["Y"].to_numpy(),
-            bins=[xedges, yedges],
-            weights=weights,
+        payload = build_marker_payload(df_f, year_range, min_sev, severe_only)
+        center_lat = float(df_f["Y"].mean())
+        center_lon = float(df_f["X"].mean())
+        fmap = make_collision_map(payload, center_lat, center_lon)
+        st_folium(
+            fmap,
+            height=1440,
+            use_container_width=True,
+            returned_objects=[],
+            key="collision_map",
         )
-        H_masked = np.ma.masked_where(H.T <= 0, H.T)
-
-        fig_hm, ax_hm = themed_fig((8, 6.2))
-        if H_masked.count():
-            mesh = ax_hm.pcolormesh(
-                xedges, yedges, H_masked,
-                cmap="YlOrRd",
-                norm=LogNorm(vmin=max(H_masked.min(), 1), vmax=H_masked.max()),
-                shading="flat",
-            )
-            cb = fig_hm.colorbar(mesh, ax=ax_hm, label="Vehicles (log)")
-            cb.ax.tick_params(colors=TEXT_COLOR, labelsize=7)
-            cb.ax.yaxis.label.set_color(TEXT_COLOR)
-        neighborhoods.boundary.plot(ax=ax_hm, color="#9aa4b2", linewidth=0.4)
-        ax_hm.set_xlim(nb_minx, nb_maxx)
-        ax_hm.set_ylim(nb_miny, nb_maxy)
-        ax_hm.set_aspect("equal")
-        style_axes(ax_hm)
-        ax_hm.set_xlabel("Longitude", fontsize=8)
-        ax_hm.set_ylabel("Latitude", fontsize=8)
-        fig_hm.tight_layout()
-        st.pyplot(fig_hm, use_container_width=True)
 
 with row1_right:
     with st.container(border=True):
         st.markdown("##### KDE density")
         st.caption("All collisions vs severe-only.")
-        coords_all = np.vstack([df_f.geometry.x, df_f.geometry.y])
+        coords_all = np.vstack([df_f["X"].to_numpy(), df_f["Y"].to_numpy()])
 
-        fig_kde, axes_kde = plt.subplots(figsize=(5.2, 7.3))
+        fig_kde, axes_kde = plt.subplots(figsize=(5.2, 6.3))
         fig_kde.patch.set_facecolor(PANEL_BG)
         style_axes(axes_kde)
 
         if coords_all.shape[1] >= 2:
-            z_all = gaussian_kde(coords_all)(grid_points).reshape(xx.shape)
+            z_all = kde_filtered(coords_all, grid_points, xx.shape, year_range, min_sev, severe_only)
             axes_kde.contourf(xx, yy, z_all, cmap="YlOrRd", levels=20)
             style_axes(axes_kde, "All collisions")
         else:

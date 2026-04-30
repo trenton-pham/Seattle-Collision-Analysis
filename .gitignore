@@ -1,8 +1,9 @@
 # Data
-data/
+data/*
+!data/processed/Collision_Processed.parquet
 
-# Streamlit
-.streamlit/
+# Streamlit app
+app_backup.py
 
 .venv/
 

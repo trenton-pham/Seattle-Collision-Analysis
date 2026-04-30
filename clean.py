@@ -68,6 +68,7 @@ def All_Years_Clean():
     gdf
 
     gdf.to_file('data/cleaned/Collision_All_Filtered.geojson', driver='GeoJSON')
+    
 
 def Vehicles_Clean():
     df_vehicle = pd.read_csv('data/raw/SDOT_Vehicle.csv')
@@ -96,6 +97,11 @@ def Vehicles_Clean():
 
     df_vehicle_filtered.to_csv('data/cleaned/Vehicle_Filtered.csv')
 
+def gdf_to_parquet():
+    gdf = gpd.read_file('data/processed/Collision_Processed.geojson')
+    gdf.to_parquet('data/processed/Collision_Processed.parquet')
+
 class main():
-    All_Years_Clean()
-    Vehicles_Clean()
+    #All_Years_Clean()
+    #Vehicles_Clean()
+    gdf_to_parquet()
