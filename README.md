@@ -20,6 +20,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 | EDA & Visualization | Pandas, GeoPandas, Matplotlib, Seaborn |
 | Spatial Analysis | GeoPandas, SciPy (KDE), Folium |
 | Modeling | Pandas, GeoPandas, NumPy, Scikit-learn |
+| Dashboard | Python, Matplotlib, Streamlit |
 
 ## Datasets
 
@@ -64,6 +65,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - Collision frequency are noticeably less 2020 onwards compared to pre-2020.
 - Intersection-related collisions account for a large proportion of collisions.
 - Collision density had a spatial shift from downtown Seattle to outer areas, specifically southern Seattle, from pre-2020 to 2020 and onwards. This means that although downtown Seattle remains a hotspot in terms of collision severity and frequency, the 2020 and onward distribution suggests a redistribution of collision density into outer areas.
+- When filtering collisions to only include `SERIOUSINJURIES` and `FATALITY` collisions, the mean severity shows inconsistent trends for downtown areas, with the mean severity peaking in 2024 from 2015 to 2025. Outer areas remain fairly stable after their peak in 2015, but haven't shown any meaningful improvements since 2016.
 
 ## Model Findings
 
@@ -72,6 +74,10 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 - ~~**Medium Risk** acts as the model's uncertainty bucket (precision 0.54, recall 0.72) — Cells whose context features sit in the middle of the distribution get pushed there, inflating recall at the cost of precision.~~ However, in the process of hyperparameter tuning **GridSearchCV** and **RandomizedSearchCV**, the recall score for the **Medium Risk** went down, meaning it only correctly identified approximately **63%** of actual medium risk zones, a noticeably lower accuracy than **72%** in the baseline model.
 - Pedestrian involvement (`avg_pedestrian_count`) and seasonal distribution (`summer_ratio`, `winter_ratio`) carry most of the predictive weight compared to spatial cells (`cell_lon`, `cell_lat`). This suggests that what kind of activity a zone sees (pedestrian-heavy or seasonally skewed) is a stronger risk signal than where the zone sits geographically, meaning risk patterns generalize across Seattle rather than being confined to specific hotspots.
 
+## Deliverables
+Check out the visualization dashboard here (work in progress): <br>
+[https://vision-zero-collision-dashboard.streamlit.app](https://vision-zero-collision-dashboard.streamlit.app)
+
 ## Current Caveats
 - The year 2020 and potentially 2021 resulted in a disruption of collision trends due to the COVID-19 pandemic. When future studies are conducted, it is best to exclude these years.
 - Although the raw dataset `SDOT_Collision_All_Years.geojson` was updated and retrieved in March 2026, the collision count for the month of December 2025 is mildly lower relative to the collision trends in previous years. This may indicate that all collision data have yet to be uploaded.
@@ -79,8 +85,8 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 
 ## Next Steps
 - Enhancing modeling: comparison with RandomForestClassifier, SVC (in a StandardScalar -> SVC pipeline), etc.
+- Optimizing runtime for Streamlit app
 - Concluding
-- (Uncertain) Creating interactive dashboard and deploy with either Streamlit or Tableau
 
 ## Learning Outcomes
 - Working with government-sourced data and handling missing values and formatting issues, along with feature engineering on raw records.
