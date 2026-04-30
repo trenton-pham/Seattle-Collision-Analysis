@@ -1,6 +1,7 @@
 # Data
-data/*
-!data/processed/Collision_Processed.parquet
+data/cleaned/
+data/raw
+data/processed/Collision_Processed.geojson
 
 # Streamlit app
 app_backup.py
