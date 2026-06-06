@@ -21,7 +21,7 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 | EDA & Visualization | Pandas, GeoPandas, Matplotlib, Seaborn |
 | Spatial Analysis | GeoPandas, SciPy (KDE), Folium |
 | Modeling | Pandas, GeoPandas, NumPy, Scikit-learn |
-| Dashboard | Python, Matplotlib, Streamlit |
+| Dashboard | Python, Matplotlib, GeoPandas, Streamlit |
 
 ## Datasets
 
