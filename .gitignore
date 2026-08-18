@@ -2,11 +2,19 @@
 data/cleaned/
 data/raw
 data/processed/Collision_Processed.geojson
+data/tableau/
+
+# Local cloud credentials and refresh state
+google-service-account*.json
+gha-creds-*.json
+previous_metadata.csv
 
 # Streamlit app
 app_backup.py
 
 .venv/
+__pycache__/
+*.py[cod]
 
 # macOS
 .DS_Store

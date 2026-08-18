@@ -21,7 +21,8 @@ This analysis investigates Seattle collision data from 2015 through 2025, focusi
 | EDA & Visualization | Pandas, GeoPandas, Matplotlib, Seaborn |
 | Spatial Analysis | GeoPandas, SciPy (KDE), Folium |
 | Modeling | Pandas, GeoPandas, NumPy, Scikit-learn |
-| Dashboard | Python, Matplotlib, GeoPandas, Streamlit |
+| Dashboard | Tableau Public (replacement), Streamlit (parallel validation only) |
+| Refresh Automation | GitHub Actions, Google Sheets API, Google Workload Identity Federation |
 
 ## Datasets
 
@@ -70,7 +71,45 @@ The raw and cleaned datasets are excluded from version control because of file s
 
 | File | Description |
 | --- | --- |
-| `app.py` | Streamlit dashboard using the processed parquet and Seattle neighborhood map to display filtered collision metrics, heatmaps, KDE density, spatial shift, and downtown vs. outer Seattle comparisons |
+| `tableau_prep.py` | Downloads or reads SDOT collisions, assigns official neighborhoods, validates the refresh, and creates Tableau-ready outputs |
+| `google_sheets_sync.py` | Stages and atomically publishes validated tables to the private Google Sheet used by Tableau Public |
+| `.github/workflows/tableau-refresh.yml` | Runs the data refresh monthly at 6:00 AM Pacific using keyless Google Cloud authentication |
+| `tableau/` | Step-by-step Tableau setup, calculated fields, dashboard blueprint, and QA checklist |
+| `app.py` | Legacy Streamlit dashboard retained during the two-refresh parallel validation period |
+
+The replacement architecture is SDOT ArcGIS → Python validation → Google Sheets
+→ Tableau Public. It does not require Windows, Power BI, or Azure. Tableau Public
+refreshes its Google Sheets extract within 24 hours; the exact Tableau refresh
+time cannot be scheduled.
+
+Start with the [Tableau migration guide](tableau/README.md).
+
+Generate the local Tableau design snapshot with:
+
+```bash
+./.venv/bin/python tableau_prep.py \
+  --source data/processed/Collision_Processed.parquet \
+  --neighborhoods data/processed/Neighborhood_Map_Atlas_Neighborhoods.geojson \
+  --output-dir data/tableau
+```
+
+Run the migration tests with:
+
+```bash
+./.venv/bin/python -m unittest discover -s tests -v
+```
+
+The generated output includes collision facts, the neighborhood dimension,
+refresh metadata, a fixed-period neighborhood comparison table, and a static
+GeoJSON polygon layer. Generated files under `data/tableau/` are reproducible
+and excluded from version control.
+
+### Legacy Streamlit dashboard
+
+`app.py` uses the processed parquet and Seattle neighborhood map to display
+filtered collision metrics, heatmaps, KDE density, spatial shift, and downtown
+versus outer Seattle comparisons. Keep it available only until the Tableau
+replacement passes two scheduled monthly refreshes.
 
 Run locally with:
 
@@ -94,7 +133,7 @@ streamlit run app.py
 - Pedestrian involvement (`avg_pedestrian_count`) and seasonal distribution (`summer_ratio`, `winter_ratio`) carry most of the predictive weight compared to spatial cells (`cell_lon`, `cell_lat`). This suggests that what kind of activity a zone sees (pedestrian-heavy or seasonally skewed) is a stronger risk signal than where the zone sits geographically, meaning risk patterns generalize across Seattle rather than being confined to specific hotspots.
 
 ## Deliverables
-Check out the visualization dashboard here (work in progress): <br>
+Legacy visualization dashboard (kept during Tableau validation): <br>
 [https://vision-zero-collision-dashboard.streamlit.app](https://vision-zero-collision-dashboard.streamlit.app)
 
 ## Current Caveats
@@ -109,7 +148,7 @@ Check out the visualization dashboard here (work in progress): <br>
 - Refining risk labels: create labels based on severe/fatal outcomes, exposure-adjusted collision rates, or empirically defined Vision Zero priority thresholds rather than only equal-frequency bins.
 - Expanding into public transportation and urban studies: overlay collisions with bus stops, light rail stations, high-frequency transit corridors, bike lanes, school zones, and pedestrian-heavy areas to study safe access to transit.
 - Building an equity and access layer: compare collision burden by neighborhood, transit access, and vulnerable road user involvement to identify where street-safety interventions would have the highest public value.
-- Deploying the Streamlit dashboard and adding interactive layers for neighborhoods, transit corridors, severe collisions, and model-predicted risk zones.
+- Completing the Tableau Public parallel-validation period, then replacing the portfolio link after two successful scheduled refreshes.
 
 ## Learning Outcomes
 - Working with government-sourced data and handling missing values and formatting issues, along with feature engineering on raw records.

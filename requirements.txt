@@ -9,4 +9,4 @@ scipy>=1.11
 matplotlib>=3.8                                           
 scikit-learn>=1.4                                                       
 mapclassify>=2.6
-seaborn>=0.13 
+seaborn>=0.13

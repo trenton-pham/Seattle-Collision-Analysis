@@ -1,0 +1,94 @@
+name: Refresh Tableau Public data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 1 * *"
+      timezone: America/Los_Angeles
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: tableau-data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TABLEAU_GOOGLE_SHEET_ID: ${{ vars.TABLEAU_GOOGLE_SHEET_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-tableau.txt
+
+      - name: Install preparation dependencies
+        run: python -m pip install -r requirements-tableau.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Check cloud configuration
+        run: |
+          if [ -z "$TABLEAU_GOOGLE_SHEET_ID" ]; then
+            echo "Repository variable TABLEAU_GOOGLE_SHEET_ID is required."
+            exit 1
+          fi
+          if [ -z "$GCP_WORKLOAD_IDENTITY_PROVIDER" ]; then
+            echo "Repository variable GCP_WORKLOAD_IDENTITY_PROVIDER is required."
+            exit 1
+          fi
+          if [ -z "$GCP_SERVICE_ACCOUNT" ]; then
+            echo "Repository variable GCP_SERVICE_ACCOUNT is required."
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud without a stored key
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+
+      - name: Read previous refresh row count
+        run: >-
+          python google_sheets_sync.py download-metadata
+          --spreadsheet-id "$TABLEAU_GOOGLE_SHEET_ID"
+          --output previous_metadata.csv
+          --allow-missing
+
+      - name: Prepare and validate current SDOT data
+        shell: bash
+        run: |
+          args=(
+            --neighborhoods data/processed/Neighborhood_Map_Atlas_Neighborhoods.geojson
+            --output-dir data/tableau
+          )
+          if [ -s previous_metadata.csv ]; then
+            args+=(--previous-metadata previous_metadata.csv)
+          fi
+          python tableau_prep.py "${args[@]}"
+
+      - name: Publish validated tables to Google Sheets
+        run: >-
+          python google_sheets_sync.py upload
+          --spreadsheet-id "$TABLEAU_GOOGLE_SHEET_ID"
+          --input-dir data/tableau
+
+      - name: Retain validated outputs for troubleshooting
+        uses: actions/upload-artifact@v4
+        with:
+          name: tableau-data-${{ github.run_id }}
+          path: data/tableau
+          retention-days: 30
